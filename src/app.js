@@ -62,15 +62,15 @@ io.on('connection', (socket) => {
       GAMES[room] = GameController.new(room, username);
     } else {
       // player 2 join
-      if (username !== GAMES[room][0].username) {
-        GAMES[room][1].username = username;
+      if (username !== GAMES[room].players[0].username) {
+        GAMES[room].players[1].username = username;
       }
     }
     // send all message for that room
     io.in(room).emit('room_state', GAMES[room]);
   });
 
-  socket.on('leave', (msg) => {
+  socket.on('leave', msg => {
     console.log(msg);
     const room = msg.room;
     const username = msg.username;
@@ -82,8 +82,13 @@ io.on('connection', (socket) => {
   // room & player && card
   socket.on('draw', msg => {
     console.log(msg);
+    const room = msg.room;
+    const username = msg.username;
+
+    GameController.draw(GAMES[room], msg.username, msg.cardid);
+
     // send all message for that room
-    socket.emit('room_state', GAMES[msg.room]);
+    socket.to(room).emit('room_state', GAMES[room]);
     // MessageController.save(msg).then((newMessage) => {
     //   // socket.emit('message', newMessage);
     //   // socket.to(newMessage.room).emit('message', newMessage);
@@ -95,7 +100,12 @@ io.on('connection', (socket) => {
   // room & player && card
   socket.on('discard', msg => {
     console.log(msg);
-    socket.emit('room_state', GAMES[msg.room]);
+    const room = msg.room;
+    const username = msg.username;
+
+    GameController.discard(GAMES[room], msg.username, msg.cardid);
+
+    socket.to(room).emit('room_state', GAMES[room]);
     // MessageController.update(msg).then((newMessage) => {
     //   socket.to(newMessage.room).emit('messageUpdated', newMessage);
     // });
@@ -105,7 +115,12 @@ io.on('connection', (socket) => {
   // room & player && card
   socket.on('play', msg => {
     console.log(msg);
-    socket.emit('room_state', GAMES[msg.room]);
+    const room = msg.room;
+    const username = msg.username;
+
+    GameController.play(GAMES[room], msg.username, msg.cardid);
+
+    socket.to(room).emit('room_state', GAMES[room]);
     // MessageController.delete(msg).then(() => {
     //   io.in(msg.room).emit('messageDeleted', msg);
     // });

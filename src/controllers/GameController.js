@@ -6,20 +6,18 @@ exports.new = function(room, username) {
   const copy = Array.from(DATABASE);
   shuffle(copy);
 
-  const starts = [pickStart(copy), pickStart(copy)];
-
   return {
     name: room,
     players: [{
-      username: username,
-      plateau: [starts[0]],
-      hand: copy.splice(0, 6),
-      vp: 0
-    }, {
-      username: '',
-      plateau: [starts[1]],
-      hand: copy.splice(0, 6),
-      vp: 0
+        username: username,
+        plateau: [pickStart(copy)],
+        hand: copy.splice(0, 6),
+        vp: 0
+      }, {
+        username: '',
+        plateau: [pickStart(copy)],
+        hand: copy.splice(0, 6),
+        vp: 0
     }],
     draw: copy,
     stock: {
@@ -28,6 +26,60 @@ exports.new = function(room, username) {
     discard: []
   };
 }
+
+exports.draw = function(game, username, cardid) {
+  const index = game.draw.findIndex(i => i.id === cardid);
+  if (index === -1) {
+    return;
+  }
+  const card = game.draw.splice(index, 1)[0];
+  const indexUser = game.players.findIndex(p => p.username === username);
+  if (indexUser === -1) {
+    return;
+  }
+  game.players[indexUser].hand.push(card);
+}
+
+exports.discard = function(game, username, cardid) {
+
+  // from pile
+  {
+    const index = game.draw.findIndex(i => i.id === cardid);
+    if (index !== -1) {
+      const card = game.draw.splice(index, 1)[0];
+      game.discard.push(card);
+    }
+  }
+
+  // from hand
+  {
+    const indexUser = game.players.findIndex(p => p.username === username);
+    if (indexUser === -1) {
+      return;
+    }
+    const index = game.players[indexUser].hand.findIndex(i => i.id === cardid);
+    if (index !== -1) {
+      const card = game.players[indexUser].hand.splice(index, 1)[0];
+      game.discard.push(card);
+    }
+  }
+
+}
+
+exports.play = function(game, username, cardid) {
+  const indexUser = game.players.findIndex(p => p.username === username);
+  if (indexUser === -1) {
+    return;
+  }
+  const index = game.players[indexUser].hand.findIndex(i => i.id === cardid);
+  if (index === -1) {
+    return;
+  }
+  const card = game.players[indexUser].hand.splice(index, 1)[0];
+  game.players[indexUser].plateau.push(card);
+
+}
+
 
 const shuffle = function(array__) {
   for (let i = array__.length - 1; i > 0; i--) {
@@ -38,5 +90,5 @@ const shuffle = function(array__) {
 
 const pickStart = function(deck) {
   const index = deck.findIndex(item => item.start);
-  return deck.splice(index, 1);
+  return deck.splice(index, 1)[0];
 }
