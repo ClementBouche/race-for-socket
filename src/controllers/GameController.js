@@ -1,9 +1,9 @@
 'use strict';
 
-const DATABASE = require('../database');
+const GAME_TEMPLATE = require('../data/games');
 
 exports.new = function(room, username) {
-  const copy = Array.from(DATABASE);
+  const copy = Array.from(GAME_TEMPLATE);
   shuffle(copy);
 
   return {
@@ -25,6 +25,16 @@ exports.new = function(room, username) {
     },
     discard: []
   };
+}
+
+exports.remove = function(games, msg) {
+  console.log(msg);
+  const room = msg.room;
+  games[room] = null;
+}
+
+exports.removeAll = function(games) {
+  games = [];
 }
 
 exports.draw = function(game, username, cardid) {
