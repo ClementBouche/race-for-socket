@@ -19,7 +19,7 @@ exports.new = function(room, username) {
         hand: copy.splice(0, 6),
         vp: 0
     }],
-    draw: copy,
+    draw: copy.splice(copy, 6),
     stock: {
       vp: 24
     },
@@ -43,20 +43,23 @@ exports.draw = function(game, username, cardid) {
     return;
   }
   const card = game.draw.splice(index, 1)[0];
+  renewDraw(game);
+
   const indexUser = game.players.findIndex(p => p.username === username);
   if (indexUser === -1) {
     return;
   }
   game.players[indexUser].hand.push(card);
+
 }
 
 exports.discard = function(game, username, cardid) {
-
   // from pile
   {
     const index = game.draw.findIndex(i => i.id === cardid);
     if (index !== -1) {
       const card = game.draw.splice(index, 1)[0];
+      renewDraw(game);
       game.discard.push(card);
     }
   }
@@ -87,7 +90,15 @@ exports.play = function(game, username, cardid) {
   }
   const card = game.players[indexUser].hand.splice(index, 1)[0];
   game.players[indexUser].plateau.push(card);
+}
 
+const renewDraw = function(game) {
+  // shuffle if draw empty
+  if (game.draw.length !== 0) {
+    return;
+  }
+  game.draw = game.discard.splice(0, game.discard.length);
+  shuffle(game.draw);
 }
 
 

@@ -106,7 +106,7 @@ io.on('connection', (socket) => {
     GameController.draw(GAMES[room], msg.username, msg.cardid);
 
     // send all message for that room
-    socket.to(room).emit('room_state', GAMES[room]);
+    io.in(room).emit('room_state', GAMES[room]);
     // MessageController.save(msg).then((newMessage) => {
     //   // socket.emit('message', newMessage);
     //   // socket.to(newMessage.room).emit('message', newMessage);
@@ -124,10 +124,7 @@ io.on('connection', (socket) => {
 
     GameController.discard(GAMES[room], msg.username, msg.cardid);
 
-    socket.to(room).emit('room_state', GAMES[room]);
-    // MessageController.update(msg).then((newMessage) => {
-    //   socket.to(newMessage.room).emit('messageUpdated', newMessage);
-    // });
+    io.in(room).emit('room_state', GAMES[room]);
   });
 
 
@@ -141,10 +138,15 @@ io.on('connection', (socket) => {
     GameController.play(GAMES[room], msg.username, msg.cardid);
 
     socket.to(room).emit('room_state', GAMES[room]);
-    // MessageController.delete(msg).then(() => {
-    //   io.in(msg.room).emit('messageDeleted', msg);
-    // });
   });
+
+
+  socket.on('move', msg => {
+    console.log(msg);
+
+    socket.to(msg.room).emit('mouse_moved', msg);
+  });
+
 
 });
 
