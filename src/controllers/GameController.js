@@ -1,9 +1,14 @@
 'use strict';
 
-const GAME_TEMPLATE = require('../data/games');
+// const GAME_TEMPLATE = require('../data/games');
+const GAME_TEMPLATE = require('../data/race-ftg');
 
 exports.new = function(room, username) {
-  const copy = Array.from(GAME_TEMPLATE);
+  const copy = Array
+      .from(GAME_TEMPLATE)
+      .filter((card) => {
+        return !(card.hasOwnProperty('color') && card.color);
+      });
   shuffle(copy);
 
   return {
@@ -12,14 +17,16 @@ exports.new = function(room, username) {
         username: username,
         plateau: [pickStart(copy)],
         hand: copy.splice(0, 6),
+        color: 'pink',
         vp: 0
       }, {
         username: '',
         plateau: [pickStart(copy)],
         hand: copy.splice(0, 6),
+        color: 'blue',
         vp: 0
     }],
-    draw: copy.splice(copy, 6),
+    draw: copy,
     stock: {
       vp: 24
     },
