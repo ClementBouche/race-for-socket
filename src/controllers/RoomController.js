@@ -1,40 +1,99 @@
 'use strict';
 
-const ROOM_TEMPLATE = require('../data/rooms');
+const GameController = require('./GameController');
 
-exports.create = function(rooms, msg) {
-  console.log(msg);
+const Room = require('../models/RoomSchema');
+const RoomSamples = require('../data/RoomSamples');
 
+// msg.room
+// msg.username
+// msg...
+
+const listProjection = {
+  name: 1,
+  maxPlayers: 1,
+  users: 1,
+  gameName: 1,
+  createdAt: 1,
+  updatedAt: 1
+}
+
+exports.create = function(msg) {
+  // read msg
   const username = msg.username;
-
-  const roomname = `${randomRoom()} de ${username}`;
-
-  rooms.push(roomname);
+  const gameName = msg.game;
+  // create room
+  const name = `${randomRoom()} de ${username}`;
+  const game = GameController.create(gameName);
+  const newMessage = new Room({
+    name: name,
+    maxPlayers: 99,
+    users: [msg.username],
+    gameName: gameName,
+    game: game
+  });
+  return newMessage.save();
 }
 
 
-exports.remove = function(rooms, msg) {
-  console.log(msg);
-  const room = msg.room;
-  const index = rooms.findIndex(r => r === room);
-  if (index !== -1) {
-    rooms.splice(index, 1);
-  }
+exports.read = function(msg) {
+  return Room.findOne({
+      $or: { name: msg.room, _id: msg.room }
+    }).exec();
 }
 
 
-exports.removeAll = function(rooms, msg) {
-  console.log(msg);
-  rooms.splice(0, rooms.length);
+exports.update = function(msg) {
+  return Room.updateOne({
+    $or: { name: msg.room, _id: msg.room }
+    }, msg).exec();
 }
 
 
-// TODO
-exports.list = function() {
+exports.delete = function(msg) {
+  return Room.deleteOne({
+    $or: { name: msg.room, _id: msg.room }
+    }).exec();
 }
 
+
+exports.list = function(msg) {
+  return Room.find({}, listProjection).exec();
+}
+
+
+exports.deleteAll = function(msg) {
+  return Room.deleteMany({}).exec();
+}
+
+
+exports.join = function(msg) {
+  const username = msg.username;
+  return Room.findOne({
+        $or: [{ name: msg.room }, { _id: msg.room }],
+      }).then((room) => {
+        const player = GameController.getPlayer(room, username);
+        if (player) {
+          // user already in game
+        } else {
+          GameController.addPlayer(room, username);
+        }
+        room.markModified('game');
+        return room.save().then((saved) => saved);
+      });
+}
+
+exports.doAction = function(msg) {
+  return Room.findOne({
+        $or: [{ name: msg.room }, { _id: msg.room }],
+      }).then((room) => {
+        GameController.doAction(room, msg);
+        room.markModified('game');
+        return room.save().then((saved) => saved);
+      });
+}
 
 const randomRoom = function() {
-  const index = Math.floor(Math.random() * ROOM_TEMPLATE.length);
-  return ROOM_TEMPLATE[index];
+  const index = Math.floor(Math.random() * RoomSamples.length);
+  return RoomSamples[index];
 }

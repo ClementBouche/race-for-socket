@@ -1,48 +1,65 @@
 'use strict';
 
-// const GAME_TEMPLATE = require('../data/games');
-const GAME_TEMPLATE = require('../data/race-ftg');
+// const RaceForGame = require('../data/games');
+const RaceForGame = require('../data/RaceForGame');
+const StarRealmsService = require('../services/StarRealms');
+const RaceForGalaxyService = require('../services/RaceForTheGalaxy');
 
-exports.new = function(room, username) {
-  const copy = Array
-      .from(GAME_TEMPLATE)
-      .filter((card) => {
-        return !(card.hasOwnProperty('color') && card.color);
-      });
-  shuffle(copy);
 
-  return {
-    name: room,
-    players: [{
-        username: username,
-        plateau: [pickStart(copy)],
-        hand: copy.splice(0, 6),
-        color: 'pink',
-        vp: 0
-      }, {
-        username: '',
-        plateau: [pickStart(copy)],
-        hand: copy.splice(0, 6),
-        color: 'blue',
-        vp: 0
-    }],
-    draw: copy,
-    stock: {
-      vp: 24
-    },
-    discard: []
-  };
+exports.create = function(game) {
+  switch (game) {
+    case 'race-for-the-galaxy':
+      return RaceForGalaxyService.create();
+    case 'star-realms':
+      return StarRealmsService.create();
+    default:
+      break;
+  }
+  // default game
+  return RaceForGalaxyService.create();
 }
 
-exports.remove = function(games, msg) {
-  console.log(msg);
-  const room = msg.room;
-  games[room] = null;
+
+exports.addPlayer = function(room, username) {
+  room.users.push(username);
+  switch (room.game.name) {
+    case 'race-for-the-galaxy':
+      return RaceForGalaxyService.addPlayer(room, username);
+    case 'star-realms':
+      return StarRealmsService.addPlayer(room, username);
+    default:
+      break;
+  }
+  // default
+  return RaceForGalaxyService.addPlayer(room, username);
 }
 
-exports.removeAll = function(games) {
-  games = [];
+
+exports.getPlayer = function(room, username) {
+  return room.game.players.find(us => us.username === username);
 }
+
+
+exports.doAction = function(room, msg) {
+  switch (room.game.name) {
+    case 'race-for-the-galaxy':
+      return RaceForGalaxyService.doAction(room, msg);
+    case 'star-realms':
+      return StarRealmsService.doAction(room, msg);
+    default:
+      break;
+  }
+  // default
+  return RaceForGalaxyService.doAction(room, msg);
+}
+
+
+
+
+
+
+
+//// old soupe
 
 exports.draw = function(game, username, cardid) {
   const index = game.draw.findIndex(i => i.id === cardid);
@@ -57,8 +74,8 @@ exports.draw = function(game, username, cardid) {
     return;
   }
   game.players[indexUser].hand.push(card);
-
 }
+
 
 exports.discard = function(game, username, cardid) {
   // from pile
@@ -86,6 +103,7 @@ exports.discard = function(game, username, cardid) {
 
 }
 
+
 exports.play = function(game, username, cardid) {
   const indexUser = game.players.findIndex(p => p.username === username);
   if (indexUser === -1) {
@@ -98,6 +116,7 @@ exports.play = function(game, username, cardid) {
   const card = game.players[indexUser].hand.splice(index, 1)[0];
   game.players[indexUser].plateau.push(card);
 }
+
 
 const renewDraw = function(game) {
   // shuffle if draw empty
@@ -116,7 +135,3 @@ const shuffle = function(array__) {
   }
 }
 
-const pickStart = function(deck) {
-  const index = deck.findIndex(item => item.start);
-  return deck.splice(index, 1)[0];
-}

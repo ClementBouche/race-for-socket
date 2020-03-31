@@ -1,3 +1,7 @@
+// https://api.cbouche.me/boardgame/599da8dbbe12e42c68f4196a
+// https://cf.geekdo-images.com/thumb/img/rORrfB3lPWLRN_tfdDl_oSbzwyo=/fit-in/200x150/pic236327.jpg
+// https://cf.geekdo-images.com/original/img/-2F-mPR0ssTm2IAsMAvnZzR0dn4=/0x0/pic236327.jpg
+
 module.exports = [
   { id:   1, sprite: [0, 0], image: 'assets/rftg/rftg_50q_1.jpg', name:'', value: 0, start: false, help: '' },
   { id: 991, sprite: [0, 0], image: 'assets/rftg/rftg_50q_1.jpg', name:'', value: 0, start: false, help: '' },

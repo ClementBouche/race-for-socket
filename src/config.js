@@ -1,3 +1,4 @@
 module.exports = {
-  'secret': 'thebestraceforthegalaxysocket'
+  'secret': 'thebestraceforthegalaxysocket',
+  'database': 'mongodb://localhost/livegamesdb'
 };

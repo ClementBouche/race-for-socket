@@ -17,33 +17,21 @@ const io = require('socket.io')(http, {
   }
 });
 
+const connect = require('./dbconnection');
+
 // database connection
-const GameController = require('./controllers/GameController');
 const RoomController = require('./controllers/RoomController');
 
-// GAMES type
-// {
-    // name: room,
-    //   players: [{
-//     plateau: [starts[0]],
-//     hand: copy.splice(0, 6),
-//     vp: 0
-//   }],
-//   draw: copy,
-//   stock: {
-//     vp: 24
-//   },
-//   discard: []
-// };
-let GAMES = [];
-
-// tableau de string
-let ROOMS = [];
 
 io.on('connection', (socket) => {
 
+
+  // USER ROUTER
   console.log('user connected');
-  socket.emit('rooms', ROOMS);
+  RoomController.list().then((rooms) => {
+    console.log('rooms', rooms);
+    socket.emit('rooms', rooms);
+  });
 
 
   socket.on('disconnect', () => {
@@ -51,102 +39,75 @@ io.on('connection', (socket) => {
   });
 
 
+  // ROOM ROUTER
   socket.on('create', (msg) => {
-    RoomController.create(ROOMS, msg);
+    console.log(msg);
 
-    socket.emit('rooms', ROOMS);
+    RoomController.create(msg)
+      .then(() => RoomController.list())
+      .then((rooms) => {
+        socket.emit('rooms', rooms);
+      });
   });
 
 
-  // msg.username msg.room
   socket.on('join', (msg) => {
     console.log(msg);
-    const room = msg.room;
-    const username = msg.username;
+
+    const idRoom = msg.room;
+    console.log('user',  msg.username, 'join room', idRoom);
     // go to new room
-    socket.join(room);
-    if (GAMES.hasOwnProperty(room) && GAMES[room] !== null) {
-      // player 2 join
-      if (username !== GAMES[room].players[0].username) {
-        GAMES[room].players[1].username = username;
-      }
-    } else {
-      // player 1 join && create new game
-      GAMES[room] = GameController.new(room, username);
-    }
-    // send all message for that room
-    io.in(room).emit('room_state', GAMES[room]);
+    socket.join(idRoom);
+
+    RoomController.join(msg)
+      .then((room) => {
+        io.in(idRoom).emit('room_state', room);
+      });
   });
 
 
-  socket.on('leave', msg => {
-    GameController.delete(GAMES, msg);
-    RoomController.delete(ROOMS, msg);
-
-    socket.emit('rooms', ROOMS);
+  socket.on('delete', msg => {
+    console.log('delete', msg);
+    RoomController.delete(msg)
+      .then(() => RoomController.list())
+      .then((rooms) => {
+        socket.emit('rooms', rooms);
+      });
   });
 
 
-  socket.on('leave_all', msg => {
-    console.log('leaveall', msg);
-    GameController.removeAll(GAMES, msg);
-    RoomController.removeAll(ROOMS, msg);
+  socket.on('delete_all', msg => {
+    console.log('delete_all', msg);
 
-    socket.emit('rooms', ROOMS);
+    RoomController.deleteAll(msg)
+      .then(() => RoomController.list())
+      .then((rooms) => {
+        socket.emit('rooms', rooms);
+      });
   });
 
 
-  // draw message
-  // room & player && card
-  socket.on('draw', msg => {
-    console.log(msg);
-    const room = msg.room;
-    const username = msg.username;
+  // GAME ROUTER
+  socket.on('game_action', msg => {
+    // console.log(msg);
+    const idRoom = msg.room;
 
-    GameController.draw(GAMES[room], msg.username, msg.cardid);
+    RoomController.doAction(msg)
+      .then((room) => {
+        io.in(idRoom).emit('room_state', room);
+      });
 
-    // send all message for that room
-    io.in(room).emit('room_state', GAMES[room]);
-    // MessageController.save(msg).then((newMessage) => {
-    //   // socket.emit('message', newMessage);
-    //   // socket.to(newMessage.room).emit('message', newMessage);
-    //   io.in(newMessage.room).emit('message', newMessage);
-    // });
+    // send message for that room
+    // io.in(idRoom).emit('room_state', room);
+    // send message for that room except sender
+    // io.to(idRoom).emit('room_state', room);
   });
-
-
-  // discard message
-  // room & player && card
-  socket.on('discard', msg => {
-    console.log(msg);
-    const room = msg.room;
-    const username = msg.username;
-
-    GameController.discard(GAMES[room], msg.username, msg.cardid);
-
-    io.in(room).emit('room_state', GAMES[room]);
-  });
-
-
-  // play message
-  // room & player && card
-  socket.on('play', msg => {
-    console.log(msg);
-    const room = msg.room;
-    const username = msg.username;
-
-    GameController.play(GAMES[room], msg.username, msg.cardid);
-
-    socket.to(room).emit('room_state', GAMES[room]);
-  });
-
 
   socket.on('move', msg => {
     console.log(msg);
 
     socket.to(msg.room).emit('mouse_moved', msg);
   });
-
 
 });
 
