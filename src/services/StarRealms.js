@@ -67,6 +67,7 @@ exports.doAction = function(room, msg) {
     msg.from === 'player_hand'       && msg.target === 'player_plateau'  ||
     msg.from === 'player_hand'       && msg.target === 'player_discard'  ||
     msg.from === 'player_plateau'    && msg.target === 'player_discard'  ||
+    msg.from === 'player_plateau'    && msg.target === 'reserve_discard' ||
     msg.from === 'player_draw'       && msg.target === 'player_hand'     ||
     false
   )) {
