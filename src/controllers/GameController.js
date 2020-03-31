@@ -21,7 +21,9 @@ exports.create = function(game) {
 
 
 exports.addPlayer = function(room, username) {
-  room.users.push(username);
+  if (!room.users.find((u) => u === username)) {
+    room.users.push(username);
+  }
   switch (room.game.name) {
     case 'race-for-the-galaxy':
       return RaceForGalaxyService.addPlayer(room, username);

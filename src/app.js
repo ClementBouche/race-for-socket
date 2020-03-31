@@ -62,6 +62,10 @@ io.on('connection', (socket) => {
     RoomController.join(msg)
       .then((room) => {
         io.in(idRoom).emit('room_state', room);
+        // emit rooms update to other
+        RoomController.list().then((rooms) => {
+          socket.broadcast.emit('rooms', rooms);
+        });
       });
   });
 

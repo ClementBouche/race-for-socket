@@ -38,21 +38,21 @@ exports.create = function(msg) {
 
 exports.read = function(msg) {
   return Room.findOne({
-      $or: { name: msg.room, _id: msg.room }
+    $or: [{ name: msg.room }, { _id: msg.room }],
     }).exec();
 }
 
 
 exports.update = function(msg) {
   return Room.updateOne({
-    $or: { name: msg.room, _id: msg.room }
+    $or: [{ name: msg.room }, { _id: msg.room }],
     }, msg).exec();
 }
 
 
 exports.delete = function(msg) {
   return Room.deleteOne({
-    $or: { name: msg.room, _id: msg.room }
+    $or: [{ name: msg.room }, { _id: msg.room }],
     }).exec();
 }
 
